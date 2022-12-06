@@ -47,6 +47,7 @@ import org.apache.http.util.CharArrayBuffer;
 
 import com.sun.jna.platform.win32.Secur32;
 import com.sun.jna.platform.win32.Sspi;
+import com.sun.jna.platform.win32.SspiUtil;
 import com.sun.jna.platform.win32.Sspi.CredHandle;
 import com.sun.jna.platform.win32.Sspi.CtxtHandle;
 import com.sun.jna.platform.win32.Sspi.SecBufferDesc;
@@ -200,7 +201,7 @@ public class WindowsNegotiateScheme extends AuthSchemeBase {
         } else {
             try {
                 final byte[] continueTokenBytes = Base64.decodeBase64(this.challenge);
-                final SecBufferDesc continueTokenBuffer = new SecBufferDesc(
+                final SecBufferDesc continueTokenBuffer = new SspiUtil.ManagedSecBufferDesc(
                         Sspi.SECBUFFER_TOKEN, continueTokenBytes);
                 final String targetName = getServicePrincipalName(context);
                 response = getToken(this.sspiContext, continueTokenBuffer, targetName);
@@ -277,7 +278,7 @@ public class WindowsNegotiateScheme extends AuthSchemeBase {
             final SecBufferDesc continueToken,
             final String targetName) {
         final IntByReference attr = new IntByReference();
-        final SecBufferDesc token = new SecBufferDesc(
+        final SspiUtil.ManagedSecBufferDesc token = new SspiUtil.ManagedSecBufferDesc(
                 Sspi.SECBUFFER_TOKEN, Sspi.MAX_TOKEN_SIZE);
 
         sspiContext = new CtxtHandle();
@@ -297,7 +298,7 @@ public class WindowsNegotiateScheme extends AuthSchemeBase {
                 dispose();
                 throw new Win32Exception(rc);
         }
-        return Base64.encodeBase64String(token.getBytes());
+        return Base64.encodeBase64String(token.getBuffer(0).getBytes());
     }
 
     @Override
